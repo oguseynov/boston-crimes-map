@@ -3,7 +3,6 @@ package com.github.oguseynov.boston.crimes.map
 
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
 object BostonCrimesMap extends App {
@@ -67,11 +66,6 @@ object BostonCrimesMap extends App {
   lazy val districts = crimesJoined.select("DISTRICT").distinct()
     .collect
     .toSeq
-
-  val schema = List(
-    ("DISTRICT", StringType, true),
-    ("frequent_crime_types_list", StringType, true)
-  )
 
   lazy val most3CrimeTypesConcatenatedDataFrame = districts
     .map(
