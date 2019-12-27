@@ -8,7 +8,7 @@ scalaVersion := "2.11.12"
 
 libraryDependencies += "org.scala-lang" % "scala-xml" % "2.11.0-M4"
 
-libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.4.4" //% "provided"
+libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.4.4" % "provided"
 
 libraryDependencies += "mrpowers" % "spark-daria" % "0.35.2-s_2.11"
 
