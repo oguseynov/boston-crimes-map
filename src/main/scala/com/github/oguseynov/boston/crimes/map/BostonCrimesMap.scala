@@ -14,7 +14,7 @@ object BostonCrimesMap extends App {
 
   val offenseCodesCsv = args(0)
   val crimeCsv = args(1)
-  //val output = args(2)
+  val output = args(2)
 
   lazy val crimes = readCsv(crimeCsv)
 
@@ -31,7 +31,6 @@ object BostonCrimesMap extends App {
   lazy val totalCrimesPerDistrictDataFrame = crimesJoined
     .select('DISTRICT, totalCrimesPerDistrict)
     .distinct()
-    .orderBy(desc("crimes_total"))
 
   // Monthly median
 
@@ -74,7 +73,7 @@ object BostonCrimesMap extends App {
     ("frequent_crime_types_list", StringType, true)
   )
 
-  lazy val most3CrimeTypesConcatenated = districts
+  lazy val most3CrimeTypesConcatenatedDataFrame = districts
     .map(
       x => (
         x.getString(0),
@@ -87,7 +86,33 @@ object BostonCrimesMap extends App {
       )
     ).toDF("DISTRICT", "frequent_crime_types")
 
-  most3CrimeTypesConcatenated.show()
+  // Average lat
+
+  val averageLat = avg('Lat).over(byDistrictDesc).as("lat")
+
+  lazy val latDataFrame = crimesJoined
+    .select('DISTRICT, averageLat)
+    .distinct()
+
+  // Average lng
+
+  val averageLng = avg('Long).over(byDistrictDesc).as("lng")
+
+  lazy val lngDataFrame = crimesJoined
+    .select('DISTRICT, averageLng)
+    .distinct()
+
+  // Join all of them
+
+  lazy val resultingDataFrame = totalCrimesPerDistrictDataFrame
+    .join(monthlyMedianDataFrame, Seq("DISTRICT"))
+    .join(most3CrimeTypesConcatenatedDataFrame, Seq("DISTRICT"))
+    .join(latDataFrame, Seq("DISTRICT"))
+    .join(lngDataFrame, Seq("DISTRICT"))
+
+  // Write to parquet file
+
+  resultingDataFrame.write.parquet(output)
 
   sparkSession.stop()
 
