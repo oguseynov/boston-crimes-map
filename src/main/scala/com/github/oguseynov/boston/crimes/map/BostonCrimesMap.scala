@@ -106,7 +106,7 @@ object BostonCrimesMap extends App {
 
   // Write to parquet file
 
-  resultingDataFrame.write.parquet(output)
+  resultingDataFrame.repartition(1).write.parquet(output)
 
   sparkSession.stop()
 
