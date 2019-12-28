@@ -16,9 +16,7 @@ object BostonCrimesMap extends App {
   val output = args(2)
 
   lazy val crimes = readCsv(crimeCsv)
-
   lazy val offenseCodes = readCsv(offenseCodesCsv)
-
   lazy val crimesJoined = broadcast(offenseCodes).join(crimes, $"CODE" === $"OFFENSE_CODE")
 
   val byDistrictDesc = Window.partitionBy('DISTRICT)
@@ -27,7 +25,7 @@ object BostonCrimesMap extends App {
 
   val totalCrimesPerDistrict = count('DISTRICT).over(byDistrictDesc).as("crimes_total")
 
-  lazy val totalCrimesPerDistrictDataFrame = crimesJoined
+  val totalCrimesPerDistrictDataFrame = crimesJoined
     .select('DISTRICT, totalCrimesPerDistrict)
     .distinct()
 
@@ -38,7 +36,7 @@ object BostonCrimesMap extends App {
     .createTempView("monthly")
 
 
-  lazy val monthlyMedianDataFrame = sparkSession.sql(
+  val monthlyMedianDataFrame = sparkSession.sql(
     "select DISTRICT, percentile_approx(count, 0.5) as crimes_monthly " +
       "from monthly group " +
       "by DISTRICT"
@@ -46,29 +44,29 @@ object BostonCrimesMap extends App {
 
   // Frequent crime types
 
-  lazy val crimesWithTypes = crimesJoined.withColumn(
+  val crimesWithTypes = crimesJoined.withColumn(
     "crime_type",
     split(col("NAME"), " - ").getItem(0)
   )
 
 
-  lazy val crimesWithFrequencyDataFrame = crimesWithTypes
+  val crimesWithFrequencyDataFrame = crimesWithTypes
     .select('DISTRICT, 'crime_type)
     .groupBy('DISTRICT, 'crime_type)
     .count()
 
   val byDistrictOrderedByFrequencyDesc = Window.partitionBy('DISTRICT).orderBy(desc("count"))
 
-  lazy val most3CrimeTypes = crimesWithFrequencyDataFrame
+  val most3CrimeTypes = crimesWithFrequencyDataFrame
     .withColumn("rank", rank.over(byDistrictOrderedByFrequencyDesc))
     .filter($"rank" <= 3)
     .drop("rank")
 
-  lazy val districts = crimesJoined.select("DISTRICT").distinct()
+  val districts = crimesJoined.select("DISTRICT").distinct()
     .collect
     .toSeq
 
-  lazy val most3CrimeTypesConcatenatedDataFrame = districts
+  val most3CrimeTypesConcatenatedDataFrame = districts
     .map(
       x => (
         x.getString(0),
@@ -85,7 +83,7 @@ object BostonCrimesMap extends App {
 
   val averageLat = avg('Lat).over(byDistrictDesc).as("lat")
 
-  lazy val latDataFrame = crimesJoined
+  val latDataFrame = crimesJoined
     .select('DISTRICT, averageLat)
     .distinct()
 
@@ -93,13 +91,13 @@ object BostonCrimesMap extends App {
 
   val averageLng = avg('Long).over(byDistrictDesc).as("lng")
 
-  lazy val lngDataFrame = crimesJoined
+  val lngDataFrame = crimesJoined
     .select('DISTRICT, averageLng)
     .distinct()
 
   // Join all of them
 
-  lazy val resultingDataFrame = totalCrimesPerDistrictDataFrame
+  val resultingDataFrame = totalCrimesPerDistrictDataFrame
     .join(monthlyMedianDataFrame, Seq("DISTRICT"))
     .join(most3CrimeTypesConcatenatedDataFrame, Seq("DISTRICT"))
     .join(latDataFrame, Seq("DISTRICT"))
