@@ -40,7 +40,8 @@ object BostonCrimesMap extends App {
 
   lazy val monthlyMedianDataFrame = sparkSession.sql(
     "select DISTRICT, percentile_approx(count, 0.5) as crimes_monthly " +
-      "from monthly group by DISTRICT"
+      "from monthly group " +
+      "by DISTRICT"
   )
 
   // Frequent crime types
