@@ -34,7 +34,7 @@ object BostonCrimesMap extends App {
     // Monthly median
 
     crimesJoined
-      .groupBy('DISTRICT, 'MONTH).count().orderBy('DISTRICT)
+      .groupBy('DISTRICT, 'YEAR, 'MONTH).count().orderBy('DISTRICT)
       .createTempView("monthly")
 
 
@@ -64,9 +64,7 @@ object BostonCrimesMap extends App {
       .filter($"rank" <= 3)
       .drop("rank")
 
-    val districts = crimesJoined.select("DISTRICT").distinct()
-      .collect
-      .toSeq
+    val districts = crimesJoined.select("DISTRICT").distinct().collect().toSeq
 
     val most3CrimeTypesConcatenatedDataFrame = districts
       .map(
@@ -75,8 +73,8 @@ object BostonCrimesMap extends App {
           most3CrimeTypes
             .select("crime_type")
             .filter($"DISTRICT" === x(0))
-            .collect
             .map(x => x.getString(0))
+            .collect()
             .mkString(", ")
         )
       ).toDF("DISTRICT", "frequent_crime_types")
