@@ -51,7 +51,6 @@ object BostonCrimesMap extends App {
       split(col("NAME"), " - ").getItem(0)
     )
 
-
     val crimesWithFrequencyDataFrame = crimesWithTypes
       .select('DISTRICT, 'crime_type)
       .groupBy('DISTRICT, 'crime_type)
@@ -59,25 +58,16 @@ object BostonCrimesMap extends App {
 
     val byDistrictOrderedByFrequencyDesc = Window.partitionBy('DISTRICT).orderBy(desc("count"))
 
-    val most3CrimeTypes = crimesWithFrequencyDataFrame
-      .withColumn("rank", rank.over(byDistrictOrderedByFrequencyDesc))
-      .filter($"rank" <= 3)
-      .drop("rank")
+    val most3CrimeTypes = dense_rank().over(byDistrictOrderedByFrequencyDesc).as("rank")
 
-    val districts = crimesJoined.select("DISTRICT").distinct().collect().toSeq
+    val most3CrimeTypesDataFrame = crimesWithFrequencyDataFrame
+      .select('DISTRICT, 'crime_type, most3CrimeTypes)
+      .filter("rank <= 2")
 
-    val most3CrimeTypesConcatenatedDataFrame = districts
-      .map(
-        x => (
-          x.getString(0),
-          most3CrimeTypes
-            .select("crime_type")
-            .filter($"DISTRICT" === x(0))
-            .map(x => x.getString(0))
-            .collect()
-            .mkString(", ")
-        )
-      ).toDF("DISTRICT", "frequent_crime_types")
+    val most3CrimeTypesConcatenatedDataFrame = most3CrimeTypesDataFrame
+      .select("DISTRICT", "crime_type")
+      .groupBy("DISTRICT")
+      .agg(concat_ws(" ,", collect_list("crime_type")).as("frequent_type"))
 
     // Average lat
 
