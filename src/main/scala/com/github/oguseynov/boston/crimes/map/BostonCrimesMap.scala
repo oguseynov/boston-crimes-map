@@ -62,7 +62,7 @@ object BostonCrimesMap extends App {
 
     val most3CrimeTypesDataFrame = crimesWithFrequencyDataFrame
       .select('DISTRICT, 'crime_type, most3CrimeTypes)
-      .filter("rank <= 2")
+      .filter("rank <= 3")
 
     val most3CrimeTypesConcatenatedDataFrame = most3CrimeTypesDataFrame
       .select("DISTRICT", "crime_type")
