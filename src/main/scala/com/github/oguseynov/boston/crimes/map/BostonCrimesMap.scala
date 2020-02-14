@@ -16,7 +16,7 @@ object BostonCrimesMap extends App {
   val output = args(2)
 
   lazy val crimes = readCsv(crimeCsv).dropDuplicates("INCIDENT_NUMBER")
-  lazy val offenseCodes = readCsv(offenseCodesCsv)//.dropDuplicates("CODE")
+  lazy val offenseCodes = readCsv(offenseCodesCsv).dropDuplicates("CODE")
   lazy val crimesJoined = crimes
     .join(broadcast(offenseCodes), $"CODE" === $"OFFENSE_CODE", "left")
     .dropDuplicates("INCIDENT_NUMBER")
